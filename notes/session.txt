@@ -1,0 +1,23 @@
+
+session concepte login page start  
+
+<?php
+session_start();
+include 'db_connection.php';
+
+?>
+
+  $_SESSION["email"] = $email;  
+            header("location:home.php");
+
+-----------------------------------------------
+
+<?php
+session_start();
+
+if (isset($_SESSION['email'])) {
+    header("location: login.php");
+    exit();
+}
+
+

@@ -1,0 +1,41 @@
+
+
+
+                      admin and employee page redirection session concept
+
+
+
+
+
+<?php
+
+session_start();
+include 'DBCONNECTION.PHP';
+
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    $email = $_POST['email'];
+    $mobile = $_POST['mobileno'];
+
+
+    $sql = "SELECT * FROM userdata WHERE email = '$email' AND mobileno = '$mobile'";
+    $result = $conn->query($sql);
+
+    if ($result->num_rows > 0) {
+        $row = $result->fetch_assoc();
+        if ($row['status'] == 1) {
+            
+            $_SESSION['email'] = $email;
+            $_SESSION['mobileno'] = $mobile;
+            
+            header("Location: dashboard.php");
+            exit();
+        } else {
+            $_SESSION['email'] = $email;
+            $_SESSION['mobileno'] = $mobile;
+            header("Location: Employee.php");
+            exit();
+        }
+    }
+}
+
+?>

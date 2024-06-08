@@ -1,0 +1,188 @@
+
+
+
+
+
+
+<?php
+session_start(); // Start session
+
+include "db_connection.php";
+
+// Define regular working hours
+$regular_working_hours = 8;
+
+// Function to calculate working hours
+function calculateWorkingHours($login_time, $logout_time) {
+    global $regular_working_hours;
+
+    // Check if login time is between 9 AM and 1 PM
+    $is_morning = date('H', $login_time) >= 9 && date('H,i', $login_time) < 13;
+
+    // Check if logout time is between 1 PM and 6 PM
+    $is_afternoon = date('H', $logout_time) >= 13 && date('i', $logout_time) >= 30 && date('H,i', $logout_time) < 18;
+
+    // Calculate total hours
+    $elapsed_time = $logout_time - $login_time;
+    $total_hours = $elapsed_time / 3600; // Convert seconds to hours
+
+    // Calculate overtime hours
+    $overtime_hours = max($total_hours - $regular_working_hours, 0);
+
+    // Calculate hours for morning and afternoon
+    $morning_hours = $is_morning ? min($total_hours, 4) : 0;
+    $afternoon_hours = $is_afternoon ? max($total_hours - $morning_hours, 0) : 0;
+
+    return [
+        'total_hours' => $total_hours,
+        'overtime_hours' => $overtime_hours,
+        'morning_hours' => $morning_hours,
+        'afternoon_hours' => $afternoon_hours
+    ];
+}
+
+// Function to insert record into database
+function insertRecord($login_time, $logout_time, $total_hours, $overtime_hours, $morning_hours, $afternoon_hours) {
+    global $conn;
+    $elapsed_time = $logout_time - $login_time;
+    $sql = "INSERT INTO login_logout_times (login_time, logout_time, elapsed_time, total_hours, overtime_hours, morning_hours, afternoon_hours) 
+            VALUES ('$login_time', '$logout_time', '$elapsed_time', '$total_hours', '$overtime_hours', '$morning_hours', '$afternoon_hours')";
+    
+    if ($conn->query($sql) === TRUE) {
+        echo "Record inserted successfully.";
+    } else {
+        echo "Error: " . $sql . "<br>" . $conn->error;
+    }
+}
+
+// Function to send email
+function sendEmail($table) {
+    // Include PHPMailer autoloader
+    require 'C:\xampp\htdocs\admin\User\PHPMailer\src\Exception.php';
+    require 'C:\xampp\htdocs\admin\User\PHPMailer\src\PHPMailer.php';
+    require 'C:\xampp\htdocs\admin\User\PHPMailer\src\SMTP.php';
+
+    try {
+        // Create a new PHPMailer instance
+        $mail = new PHPMailer\PHPMailer\PHPMailer(true);
+        //Server settings
+        $mail->isSMTP();                              //Send using SMTP
+        $mail->Host       = 'smtp.gmail.com';       //Set the SMTP server to send through
+        $mail->SMTPAuth   = true;             //Enable SMTP authentication
+        $mail->Username   = 'sriprasath1608@gmail.com';   //SMTP write your email
+        $mail->Password   = 'fwjwoopyfgrmcynp';      //SMTP password
+        $mail->SMTPSecure = 'ssl';            //Enable implicit SSL encryption
+        $mail->Port       = 465;                                    
+
+        //Recipients
+        $mail->setFrom('sriprasath1608@gmail.com', 'sri');
+        $mail->addAddress('sriprasath1608@gmail.com'); // Add a recipient
+
+        // Content
+        $mail->isHTML(true); // Set email format to HTML
+        $mail->Sub/ject = 'Login/Logout Time Tracking Table';
+        $mail->Body    = "Please find the login/logout time tracking table below:<br><br>$table";
+
+        // Send email
+        $mail->send();
+        echo "Email sent successfully.";
+    } catch (Exception $e) {
+        echo "Error: Unable to send email. {$mail->ErrorInfo}";
+    }
+}
+
+// Handle login/logout actions
+if (isset($_POST['login'])) {
+    $_SESSION['login_time'] = time(); // Record login time
+}
+
+if (isset($_POST['logout'])) {
+    if (isset($_SESSION['login_time'])) {
+        $login_time = $_SESSION['login_time'];
+        $logout_time = time(); // Record logout time
+
+        // Calculate working hours
+        $working_hours = calculateWorkingHours($login_time, $logout_time);
+
+        // Store data in the database
+        insertRecord($login_time, $logout_time, $working_hours['total_hours'], $working_hours['overtime_hours'], $working_hours['morning_hours'], $working_hours['afternoon_hours']);
+
+        // Send email with the table
+        $table = ""; // You need to fetch data from the database to create the table
+        sendEmail($table);
+
+        // Unset login time to clear the session
+        unset($_SESSION['login_time']);
+    } else {
+        echo "You are not logged in.";
+    }
+}
+?>
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Login/Logout Time Tracking</title>
+    <link rel="stylesheet" type="text/css" href="styles.css">
+</head>
+<body>
+
+<form method="post">
+    <?php if (!isset($_SESSION['login_time'])) { ?>
+        <input type="submit" name="login" value="Login">
+    <?php } else { ?>
+        <input type="submit" name="logout" value="Logout">
+    <?php } ?>
+</form>
+
+<form method="post">
+    <input type="submit" name="clear" value="Clear Data">
+</form>
+<?php
+if (isset($_POST['clear'])) {
+    // Clear all records from the table
+    $sql = "TRUNCATE TABLE login_logout_times";
+    if ($conn->query($sql) === TRUE) {
+        echo "All records cleared successfully.";
+    } else {
+        echo "Error: " . $sql . "<br>" . $conn->error;
+    }
+}
+
+// Fetch data from the database
+$sql = "SELECT DATE_FORMAT(FROM_UNIXTIME(login_time), '%Y-%m-%d') AS login_date, 
+morning_hours,
+afternoon_hours,
+total_hours, 
+overtime_hours
+FROM login_logout_times";
+$result = $conn->query($sql);
+
+// Initialize an empty string to store the HTML table
+$table_html = "";
+
+// Check if there are any records found
+if ($result->num_rows > 0) {
+// Start building the HTML table
+$table_html .= "<table>";
+$table_html .= "<tr><th>Date</th><th>Morning Hours</th><th>Afternoon Hours</th><th>Total Working Hours</th><th>Overtime Hours</th></tr>";
+while ($row = $result->fetch_assoc()) {
+$table_html .= "<tr>";
+$table_html .= "<td>" . $row['login_date'] . "</td>";
+$table_html .= "<td>" . gmdate("H:i:s", $row['morning_hours'] * 3600) . "</td>";
+$table_html .= "<td>" . gmdate("H:i:s", $row['afternoon_hours'] * 3600) . "</td>";
+$table_html .= "<td>" . gmdate("H:i:s", $row['total_hours'] * 3600) . "</td>";
+$table_html .= "<td>" . gmdate("H:i:s", $row['overtime_hours'] * 3600) . "</td>";
+$table_html .= "</tr>";
+}
+// Close the HTML table
+$table_html .= "</table>";
+} else {
+// No records found
+$table_html = "No records found.";
+}
+
+// Display the HTML table
+echo $table_html;
+
+?>

@@ -1,0 +1,21 @@
+
+bootstrap navbar and sidebar coloum stucher
+
+
+
+<div class="container-fluid">
+    <div class="row bg-danger">
+hi
+
+    </div>
+    <div class="row">
+    <div class="col-lg-2 bg-primary vh-100">
+    hi
+    </div>
+
+    <div class="col-lg-10 bg-black">
+    hi
+    </div>
+    </div>
+ </div>
+ 

@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Display Images in Bootstrap Cards</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <style>
+    .card {
+      margin-bottom: 20px;
+    }
+    .card-img-top {
+      height: 200px; /* Set height for consistency */
+      object-fit: cover; /* Cover image without stretching */
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1 class="mt-5 mb-3">Images</h1>
+    <div class="row">
+      <?php
+        $folder_path = "../mainimages/";
+
+        // Get an array of image files in the folder
+        $files = scandir($folder_path);
+
+        // Loop through each image file
+        foreach ($files as $file) {
+          $extension = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+
+          if ($file != "." && $file != ".." && !is_dir($folder_path . $file) &&
+              in_array($extension, array("jpg", "jpeg", "png", "gif"))) {
+            echo '<div class="col-md-4">';
+            echo '<div class="card">';
+            echo '<img src="' . $folder_path . $file . '" class="card-img-top" alt="' . $file . '">';
+            echo '<div class="card-body">';
+            echo '<h5 class="card-title">' . $file . '</h5>';
+            echo '</div>';
+            echo '</div>';
+            echo '</div>';
+          }
+        }
+      ?>
+
+<?php
+  $image_folder = "mainimages/";
+
+  // Check if the directory exists
+  if (!is_dir($image_folder)) {
+    echo "Error: Directory '$image_folder' not found.";
+    exit; // Stop script execution
+  }
+
+  // Get an array of image files
+  $files = scandir($image_folder);
+
+  // Loop through each image file
+  foreach ($files as $file) {
+    // ... (rest of your code)
+  }
+?>
+    </div>
+  </div>
+</body>
+</html>

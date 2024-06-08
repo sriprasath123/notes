@@ -1,0 +1,71 @@
+databasic store and fetch methored
+
+
+
+
+
+<?php
+// Include database connection file
+include "db_connection.php";
+
+// Check if the form was submitted
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    // Retrieve form data
+    $project_id = $_POST['projectid'];
+    $project_name = $_POST['projectname'];
+    $role = $_POST['role'];
+    $email = $_POST['email'];
+
+    // Check if a record with the same project_id already exists
+    $check_stmt = $conn->prepare("SELECT project_id FROM assing WHERE project_id = ?");
+    $check_stmt->bind_param("s", $project_id);
+    $check_stmt->execute();
+    $check_stmt->store_result();
+
+    if ($check_stmt->num_rows > 0) {
+        // Display error message if project_id already exists
+        echo "<script>alert('Project ID already exists! Please use a different ID.');</script>";
+    } else {
+        // Prepare SQL statement for inserting data
+        $insert_stmt = $conn->prepare("INSERT INTO assing (project_id, project_name, role, email) VALUES (?, ?, ?, ?)");
+        $insert_stmt->bind_param("ssss", $project_id, $project_name, $role, $email);
+
+        // Execute the insert statement
+        if ($insert_stmt->execute()) {
+            echo "<script>alert('Form data submitted successfully!');</script>";
+        } else {
+            echo "<script>alert('Error: " . $insert_stmt->error . "');</script>";
+        }
+
+        // Close the insert statement
+        $insert_stmt->close();
+    }
+
+    // Close the check statement
+    $check_stmt->close();
+}
+
+// Retrieve data from database
+$sql = "SELECT * FROM assing";
+$result = $conn->query($sql);
+
+if ($result->num_rows > 0) {
+    // Output data as HTML table
+    echo "<table border='1'>";
+    echo "<tr><th>PROJECT ID</th><th>PROJECT NAME</th><th>ROLE</th><th>EMAIL</th></tr>";
+    while ($row = $result->fetch_assoc()) {
+        echo "<tr>";
+        echo "<td>" . $row['project_id'] . "</td>";
+        echo "<td>" . $row['project_name'] . "</td>";
+        echo "<td>" . $row['role'] . "</td>";
+        echo "<td>" . $row['email'] . "</td>";
+        echo "</tr>";
+    }
+    echo "</table>";
+} else {
+    echo "No data found";
+}
+
+// Close database connection
+$conn->close();
+?>
