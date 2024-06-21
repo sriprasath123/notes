@@ -37,3 +37,33 @@ if(isset($_POST['submit'])) {
     $conn->close();
 }
 ?>
+
+
+
+
+
+
+<?php
+include "db_conn.php"; 
+
+$sql = "SELECT r.username, r.email, r.category, u.login_logout 
+        FROM register r 
+        INNER JOIN users u ON r.username = u.username";
+
+$result = $conn->query($sql);
+
+$user_details = array();
+if ($result && $result->num_rows > 0) {
+    while ($row = $result->fetch_assoc()) {
+        $user_details[] = array(
+            'username' => $row['username'],
+            'email' => $row['email'],
+            'category' => ($row['category'] == 1 ? "Admin" : "User"),
+            'login_status' => ($row['login_logout'] == 1 ? "Logged In" : "Logged Out")
+            
+        );
+    }
+}
+
+$conn->close();
+?>
