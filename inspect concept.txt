@@ -1,0 +1,19 @@
+inspect concept
+
+
+
+// Disable right-click context menu
+        $(document).on('contextmenu', function(e) {
+            e.preventDefault();
+        });
+
+        // Disable certain key combinations
+        $(document).on('keydown', function(e) {
+            if (e.keyCode == 123 || // F12
+                (e.ctrlKey && e.shiftKey && (e.keyCode == 73 || e.keyCode == 74)) || // Ctrl+Shift+I/J
+                (e.ctrlKey && e.keyCode == 85) // Ctrl+U
+            ) {
+                e.preventDefault();
+            }
+        });
+    });
